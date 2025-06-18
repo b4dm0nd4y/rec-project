@@ -9,12 +9,34 @@ GENRES = [
     'Нон-фикшн', 'Мини'
 ]
 
-books = pd.read_csv('./data/phantasy/boevoe-fentezi.csv')
+GENRES_DICT = {
+    'Все жанры': 'genres.csv',
+    'Фэнтези': 'phantasy.csv',
+    'Роман': 'novels.csv',
+    'Фантастика': 'phantastic.csv',
+    'Молодежная проза': 'prose.csv',
+    'Попаданцы': 'popadancy.csv',
+    'Эротика': 'erotika.csv',
+    'Фанфик': 'fanfiki.csv',
+    'Детективы': 'detective.csv',
+    'Проза': 'proza.csv',
+    'Триллеры': 'triller.csv',
+    'Мистика/Ужасы': 'horror.csv',
+    'Разное': 'raznoye.csv',
+    'Нон-фикшн': 'non-fiction.csv',
+    'Мини': 'mini.csv'
+}
+
+BASE_PATH = './data/genres/'
 
 if 'search_triggered' not in st.session_state:
     st.session_state.search_triggered = False
 if 'page' not in st.session_state:
     st.session_state.page = 1
+
+@st.cache_data
+def load_books(genre):
+    return pd.read_csv(BASE_PATH+GENRES_DICT[genre])
 
 
 
@@ -38,16 +60,24 @@ items_per_page = st.number_input(
 )
 
 if st.session_state.search_triggered:
-    
-    
-    
+    books = load_books(genre)
     total_books = books.shape[0]
     num_pages = (total_books + items_per_page - 1) // items_per_page
     
-    new_page = st.number_input(
-        'Страница', min_value=1, max_value=num_pages, value=1, step=1
-    )
-    st.session_state.page = new_page
+    
+    
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+    st.markdown(f"🔎 **Найдено результатов:** {total_books}")
+    with nav_col1:
+        if st.button("⬅️ Назад", key='prev_top') and st.session_state.page > 1:
+            st.session_state.page -=1
+    with nav_col2:
+        st.markdown(f'**Страница {st.session_state.page} из {num_pages}**')
+    with nav_col3:
+        if st.button("Вперёд ➡️", key='next_top') and st.session_state.page < num_pages:
+            st.session_state.page +=1
+    
+    
     
     start_idx = (st.session_state.page - 1) * items_per_page
     end_idx = start_idx + items_per_page
@@ -62,5 +92,17 @@ if st.session_state.search_triggered:
                 st.markdown(f'**{row['author']}**')
                 st.markdown(f'[**{row['title']}**]({row['book_url']})')
                 st.markdown(f'{row['annotation']}')
-                st.markdown(f'**{row['genre']}**')
+                st.markdown(f'📖 _Жанр: {row['genre']}_')
             st.markdown('---')
+            
+            
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+    st.markdown(f"🔎 **Найдено результатов:** {total_books}")
+    with nav_col1:
+        if st.button("⬅️ Назад", key='prev_bottom') and st.session_state.page > 1:
+            st.session_state.page -=1
+    with nav_col2:
+        st.markdown(f'**Страница {st.session_state.page} из {num_pages}**')
+    with nav_col3:
+        if st.button("Вперёд ➡️", key='next_bottom') and st.session_state.page < num_pages:
+            st.session_state.page +=1
