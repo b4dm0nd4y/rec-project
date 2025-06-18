@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-books = pd.read_csv('./data/boevoe-fentezi.csv')
+books = pd.read_csv('./data/phantasy/boevoe-fentezi.csv')
 
 if 'search_triggered' not in st.session_state:
     st.session_state.search_triggered = False
@@ -47,4 +47,5 @@ if st.session_state.search_triggered:
                 st.markdown(f'**{row['author']}**')
                 st.markdown(f'[**{row['title']}**]({row['book_url']})')
                 st.markdown(f'{row['annotation']}')
+                st.markdown(f'**{row['genre']}**')
             st.markdown('---')
