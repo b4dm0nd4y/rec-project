@@ -33,10 +33,26 @@ if 'search_triggered' not in st.session_state:
     st.session_state.search_triggered = False
 if 'page' not in st.session_state:
     st.session_state.page = 1
+if "prev_genre" not in st.session_state:
+    st.session_state.prev_genre = "Все жанры"
 
 @st.cache_data
 def load_books(genre):
     return pd.read_csv(BASE_PATH+GENRES_DICT[genre])
+
+def render_navigation(num_pages, location):
+    col1, col2, col3 = st.columns([1,2,1])
+    with col1:
+        if st.button("⬅️ Назад", key=f"prev_{location}"):
+            if st.session_state.page > 1:
+                st.session_state.page -=1
+    with col2:
+        st.markdown(f"**Страница {st.session_state.page} из {num_pages}**")
+    with col3:
+        if st.button("Вперёд ➡️", key=f"next_{location}"):
+            if st.session_state.page < num_pages:
+                st.session_state.page += 1
+
 
 
 
@@ -53,6 +69,10 @@ with col2:
         st.session_state.page = 1
     
 genre = st.selectbox("📚 Фильтр по жанру", ['Все жанры'] + GENRES)
+
+if genre != st.session_state.prev_genre:
+    st.session_state.page = 1
+    st.session_state.prev_genre = genre
     
     
 items_per_page = st.slider(
@@ -64,20 +84,8 @@ if st.session_state.search_triggered:
     total_books = books.shape[0]
     num_pages = (total_books + items_per_page - 1) // items_per_page
     
-    
-    
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     st.markdown(f"🔎 **Найдено результатов:** {total_books}")
-    with nav_col1:
-        if st.button("⬅️ Назад", key='prev_top') and st.session_state.page > 1:
-            st.session_state.page -=1
-    with nav_col2:
-        st.markdown(f'**Страница {st.session_state.page} из {num_pages}**')
-    with nav_col3:
-        if st.button("Вперёд ➡️", key='next_top') and st.session_state.page < num_pages:
-            st.session_state.page +=1
-    
-    
+    render_navigation(num_pages, location="top")
     
     start_idx = (st.session_state.page - 1) * items_per_page
     end_idx = start_idx + items_per_page
@@ -95,14 +103,5 @@ if st.session_state.search_triggered:
                 st.markdown(f'📖 _Жанр: {row['genre']}_')
             st.markdown('---')
             
-            
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     st.markdown(f"🔎 **Найдено результатов:** {total_books}")
-    with nav_col1:
-        if st.button("⬅️ Назад", key='prev_bottom') and st.session_state.page > 1:
-            st.session_state.page -=1
-    with nav_col2:
-        st.markdown(f'**Страница {st.session_state.page} из {num_pages}**')
-    with nav_col3:
-        if st.button("Вперёд ➡️", key='next_bottom') and st.session_state.page < num_pages:
-            st.session_state.page +=1
+    render_navigation(num_pages, location="bottom")
