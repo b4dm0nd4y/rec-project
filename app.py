@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-books = pd.read_csv('./data/books.csv')
+books = pd.read_csv('./data/boevoe-fentezi.csv')
 
 if 'search_triggered' not in st.session_state:
     st.session_state.search_triggered = False
