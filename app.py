@@ -2,6 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+GENRES = [
+    'Фэнтези', 'Роман', 'Фантастика', 'Молодежная проза',
+    'Попаданцы', 'Эротика', 'Фанфик', 'Детективы',
+    'Проза', 'Триллеры', 'Мистика/Ужасы', 'Разное',
+    'Нон-фикшн', 'Мини'
+]
+
 books = pd.read_csv('./data/phantasy/boevoe-fentezi.csv')
 
 if 'search_triggered' not in st.session_state:
@@ -9,7 +16,9 @@ if 'search_triggered' not in st.session_state:
 if 'page' not in st.session_state:
     st.session_state.page = 1
 
-st.title('Показать 10 случайных книг из базы данных')
+
+
+st.title('📚 Семантический Поиск Книг')
 
 col1, col2 = st.columns([4,1])
 with col1:
@@ -21,11 +30,17 @@ with col2:
         st.session_state.search_triggered = True
         st.session_state.page = 1
     
+genre = st.selectbox("📚 Фильтр по жанру", ['Все жанры'] + GENRES)
+    
+    
 items_per_page = st.number_input(
     'Показывать на странице', min_value=1, max_value=10, value=3, step=1
 )
 
 if st.session_state.search_triggered:
+    
+    
+    
     total_books = books.shape[0]
     num_pages = (total_books + items_per_page - 1) // items_per_page
     
