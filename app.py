@@ -46,5 +46,5 @@ if st.session_state.search_triggered:
             with book_col2:
                 st.markdown(f'**{row['author']}**')
                 st.markdown(f'[**{row['title']}**]({row['book_url']})')
-                st.markdown(f'**{row['annotation']}**')
+                st.markdown(f'{row['annotation']}')
             st.markdown('---')
