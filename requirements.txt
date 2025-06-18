@@ -1,3 +1,10 @@
 numpy
 pandas
 streamlit
+
+requests
+beautifulsoup4
+selenium
+aiohttp
+asyncio
+nest_asyncio
