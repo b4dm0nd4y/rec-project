@@ -1,15 +1,30 @@
+# default
 numpy
 pandas
 streamlit
+tqdm
 
+# text preprocessing
 natasha
 nltk
+
+# models
 torch
 transformers
+sentence-transformers
 
+# parsing
 requests
 beautifulsoup4
 selenium
 aiohttp
 asyncio
 nest_asyncio
+
+# langchain
+langchain_qdrant
+langchain_huggingface
+langchain_core
+
+qdrant_client
+uuid
