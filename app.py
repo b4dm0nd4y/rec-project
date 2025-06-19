@@ -48,7 +48,7 @@ GENRES = [
 COLLECTION_NAME = 'books-rec-project3'
 
 model_name = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
-model_kwargs = {'device': 'cuda'}
+model_kwargs = {'device': 'cpu'}
 encode_kwargs = {'normalize_embeddings': True}
 
 hf = HuggingFaceEmbeddings(
