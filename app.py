@@ -173,7 +173,7 @@ if genre != st.session_state.prev_genre:
     
     
 items_per_page = st.slider(
-    'Показывать книг на странице', min_value=1, max_value=10, value=5, step=1
+    'Показывать книг', min_value=1, max_value=10, value=5, step=1
 )
 
 if st.session_state.search_triggered:
