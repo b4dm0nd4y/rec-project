@@ -10,7 +10,7 @@ GENRES = [
 ]
 
 GENRES_DICT = {
-    'Все жанры': 'genres.csv',
+    'Все жанры': 'final.csv',
     'Фэнтези': 'phantasy.csv',
     'Роман': 'novels.csv',
     'Фантастика': 'phantastic.csv',
