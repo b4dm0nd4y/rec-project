@@ -18,6 +18,17 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 
+if 'search_triggered' not in st.session_state:
+    st.session_state.search_triggered = False
+if 'page' not in st.session_state:
+    st.session_state.page = 1
+if "prev_genre" not in st.session_state:
+    st.session_state.prev_genre = "Все жанры"
+    
+
+
+st.session_state.already_ran = True
+
 nltk.download('stopwords')
 stop = set(stopwords.words('russian')) - {'не', 'ни'}
 
@@ -34,9 +45,8 @@ GENRES = [
     'Нон-фикшн', 'Мини'
 ]
 
-COLLECTION_NAME = 'books-rec-project'
+COLLECTION_NAME = 'books-rec-project3'
 
-client = QdrantClient(path='./db/qdrant_db')
 model_name = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
 model_kwargs = {'device': 'cuda'}
 encode_kwargs = {'normalize_embeddings': True}
@@ -45,22 +55,6 @@ hf = HuggingFaceEmbeddings(
     model_name=model_name,
     model_kwargs=model_kwargs,
 )
-
-vector_store = QdrantVectorStore(
-    client=client,
-    collection_name='books-rec-project3',
-    embedding=hf
-)
-
-if 'search_triggered' not in st.session_state:
-    st.session_state.search_triggered = False
-if 'page' not in st.session_state:
-    st.session_state.page = 1
-if "prev_genre" not in st.session_state:
-    st.session_state.prev_genre = "Все жанры"
-
-
-
 
 
 def clean_string(text):
@@ -126,6 +120,14 @@ def render_navigation(num_pages, location):
                 st.session_state.page += 1
 
 def search_books(query, genre, top_k=5):
+    client = QdrantClient(path='./db/qdrant_db')
+
+    vector_store = QdrantVectorStore(
+        client=client,
+        collection_name=COLLECTION_NAME,
+        embedding=hf
+    )
+    
     my_filter = Filter()
     
     if genre in GENRES:
@@ -133,7 +135,7 @@ def search_books(query, genre, top_k=5):
             must = [
                 FieldCondition(
                     key='metadata.main_genre',
-                    match=MatchAny(any=genre)
+                    match=MatchAny(any=[genre])
                 )
             ]
         )
@@ -143,6 +145,8 @@ def search_books(query, genre, top_k=5):
         filter=my_filter,
         k=3
     )
+    
+    client.close()
 
     return results
 
@@ -183,15 +187,11 @@ if st.session_state.search_triggered:
     st.markdown(f"🔎 **Найдено результатов:** {total_books}")
     render_navigation(num_pages, location="top")
     
-    start_idx = (st.session_state.page - 1) * items_per_page
-    end_idx = start_idx + items_per_page
-    visible_results = results[start_idx:end_idx]
-    
-    for idx, doc in enumerate(visible_results):
+    for idx, doc in enumerate(results):
         with st.container():
             book_col1, book_col2 = st.columns([1,4])
             with book_col1:
-                st.image(doc.metadata.get('img_url', 'No img_url'))
+                st.image(doc.metadata.get('img_url', 'https://img.freepik.com/premium-vector/broken-image-icon_268104-8936.jpg'))
             with book_col2:
                 st.markdown(f'**{doc.metadata.get('author', 'No author')}**')
                 st.markdown(
