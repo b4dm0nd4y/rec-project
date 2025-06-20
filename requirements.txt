@@ -25,7 +25,9 @@ nest_asyncio
 langchain_qdrant
 langchain_huggingface
 langchain_core
-langchain_groq
+langchain_community
+mistralai
+langchain_mistralai
 
 qdrant_client
 uuid

@@ -2,10 +2,13 @@ import streamlit as st
 import re
 
 from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, MatchAny
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
-from qdrant_client.models import Filter, FieldCondition, MatchAny
+from langchain.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
+from langchain.schema.output_parser import StrOutputParser
 
 from natasha import Segmenter, NewsEmbedding, NewsMorphTagger, MorphVocab, Doc
 
@@ -49,6 +52,34 @@ hf = HuggingFaceEmbeddings(
     model_name=model_name,
     model_kwargs=model_kwargs,
 )
+
+API_TOKEN = ''
+
+llm = ChatMistralAI(
+    model = 'mistral-small',
+    temperature = .7,
+    max_tokens=2000,
+    api_key=API_TOKEN
+)
+
+rag_prompt = ChatPromptTemplate.from_messages([
+    ("system", """Ты эксперт-аналитик книгам с многолетним опытом и отличным чувством юмора! 🎯
+    Твоя задача - проанализировать предоставленные данные по книге и предугадать сюжет.
+
+    Стиль анализа:
+    - Структурируй ответ с эмодзи и забавными комментариями
+    - Отвечай на только русском языке, это важно
+    - Generate your response in russian language
+
+    Помни: юмор должен быть добрым и не оскорбительным. Цель - сделать анализ интересным!
+
+    Если среди аннотаций есть что-то особенно забавное - обязательно это отметь! 😄"""),
+
+    ("human", """📊 ДАННЫЕ ДЛЯ ЭКСПЕРТНОГО МНЕНИЯ:
+{context}
+
+🎯 ЗАПРОС НА ЭКСПЕРТИЗУ: {question}""")
+])
 
 
 def clean_string(text):
@@ -98,8 +129,6 @@ def preprocess_string(string):
     return string
 
 
-
-
 def render_navigation(num_pages, location):
     col1, col2, col3 = st.columns([1,2,1])
     with col1:
@@ -144,7 +173,37 @@ def search_books(query, genre, top_k=5):
 
     return results
 
+def format_book(book):
+    formatted_book = f"""
+    Авторы: {book.get('author', 'Не указано')}
+    Название: {book.get('title', 'Не указано')}
+    Картинка: {book.get('img_url', 'Не указано')}
+    Сылка: {book.get('book_url', 'Не указано')}
 
+    Краткое Описание: {book.get('annotation', 'Не указано')}...
+    """
+
+    return formatted_book
+
+def generate_text(doc):
+    query = 'Что ты думаешь про эту книгу, ее название и ее автора?'
+    formatted_context = format_book(doc.metadata)
+    input_data = {
+        "context": formatted_context,
+        "question": query
+    }
+    formatted_prompt = rag_prompt.format(**input_data)
+    
+    # Получаем ответ
+    response = llm.invoke(formatted_prompt)
+    final_answer = StrOutputParser().parse(response)
+
+    return final_answer.content
+
+def reset_generated_texts():
+    for k in list(st.session_state.keys()):
+        if k.startswith("generated_"):
+            del st.session_state[k]
 
 
 st.title('📚 Семантический Поиск Книг')
@@ -156,12 +215,14 @@ with col1:
     )
 with col2:
     if st.button('Найти'):
+        reset_generated_texts() 
         st.session_state.search_triggered = True
         st.session_state.page = 1
     
 genre = st.selectbox("📚 Фильтр по жанру", ['Все жанры'] + GENRES)
 
 if genre != st.session_state.prev_genre:
+    reset_generated_texts() 
     st.session_state.page = 1
     st.session_state.prev_genre = genre
     
@@ -190,5 +251,14 @@ if st.session_state.search_triggered:
                 )
                 st.markdown(f'{doc.metadata.get('annotation','No annotation')}')
                 st.markdown(f'📖 _Жанр: {doc.metadata.get('main_genre','No main_genre')}_')
+                
+                btn_key = f"generate_btn_{idx}"
+                if st.button("🪄 Экспертное мнение", key=btn_key):
+                    st.session_state[f"generated_{idx}"] = generate_text(doc)
+
+                # === Show generated text if exists ===
+                generated_key = f"generated_{idx}"
+                if generated_key in st.session_state:
+                    st.markdown(f'**Ответ Эксперта:**\n\n{st.session_state[generated_key]}')
             st.markdown('---')
             
