@@ -1,22 +1,14 @@
 import streamlit as st
-import pandas as pd
 import re
 
 from qdrant_client import QdrantClient
 
-from sentence_transformers import SentenceTransformer
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client.models import Filter, FieldCondition, MatchAny
 
-import numpy as np
 from natasha import Segmenter, NewsEmbedding, NewsMorphTagger, MorphVocab, Doc
-import nltk
-from nltk.corpus import stopwords
 
-import torch
-import torch.nn as nn
-from transformers import AutoTokenizer, AutoModel
 
 if 'search_triggered' not in st.session_state:
     st.session_state.search_triggered = False
@@ -29,8 +21,10 @@ if "prev_genre" not in st.session_state:
 
 st.session_state.already_ran = True
 
-nltk.download('stopwords')
-stop = set(stopwords.words('russian')) - {'не', 'ни'}
+with open('./data/stopwords/russian', 'r') as f:
+    lines = [line.strip() for line in f.readlines()]
+    
+stop = set(lines) - {'не', 'ни'}
 
 segmenter = Segmenter()
 emb = NewsEmbedding()
@@ -143,7 +137,7 @@ def search_books(query, genre, top_k=5):
     results = vector_store.similarity_search(
         preprocess_string(query),
         filter=my_filter,
-        k=3
+        k=top_k
     )
     
     client.close()
@@ -178,14 +172,11 @@ items_per_page = st.slider(
 
 if st.session_state.search_triggered:
     if query != '':
-        results = search_books(query, genre)
+        results = search_books(query, genre, items_per_page)
     else:
         results = []
-    total_books = len(results)
-    num_pages = (total_books + items_per_page - 1) // items_per_page
     
-    st.markdown(f"🔎 **Найдено результатов:** {total_books}")
-    render_navigation(num_pages, location="top")
+    st.markdown(f"🔎 **Найдено результатов:** {len(results)}")
     
     for idx, doc in enumerate(results):
         with st.container():
@@ -201,5 +192,3 @@ if st.session_state.search_triggered:
                 st.markdown(f'📖 _Жанр: {doc.metadata.get('main_genre','No main_genre')}_')
             st.markdown('---')
             
-    st.markdown(f"🔎 **Найдено результатов:** {total_books}")
-    render_navigation(num_pages, location="bottom")
